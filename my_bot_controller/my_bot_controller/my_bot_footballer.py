@@ -58,9 +58,11 @@ class mybotFootballerNode(Node):
         super().__init__("my_bot_footballer")
         self.get_logger().info("My bot footballer node has been started")
         self.cmd_vel_pub_ = self.create_publisher(Twist, "/cmd_vel", 10)
+        self.timer = self.create_timer(0.5, self.send_velocity_command)
         self.pose_subscriber = self.create_subscription(TFMessage, "/tf", self.tf_callback, 10)
         self.image_subscribe = self.create_subscription(CompressedImage, "/camera/image_raw/compressed", self.image_callback, 10)
         self.pointCloud_subscirbe = self.create_subscription(PointCloud2, "/camera/points", self.pointCloud_callback, 10)
+        self.laser_subscribe = self.create_subscription(LaserScan, "/scan", self.laser_callback, 10)
 
         # self.grid_size = (500, 500)
         # self.grid_map = np.zeros(self.grid_size, dtype=np.uint8)
@@ -73,14 +75,13 @@ class mybotFootballerNode(Node):
             #                         +"\n" + "y: " + str(msg.transforms[0].transform.translation.y)\
             #                         +"\n" + "z: " + str(msg.transforms[0].transform.rotation.z)\
             #                         +"\n" + "w: " + str(msg.transforms[0].transform.rotation.w))
-        self.send_velocity_command()
 
     def image_callback(self, msg: CompressedImage):
         picTime = int(msg.header.stamp.sec)
         # self.get_logger().info("time: " + str(picTime))
         if picTime % 5 == 0:
             image = np.asarray(bytearray(msg.data), dtype="uint8")
-            # self.imgSave = cv.imdecode(image, cv.IMREAD_COLOR)
+            self.imgSave = cv.imdecode(image, cv.IMREAD_COLOR)
             # cv.imwrite(f'/my_bot/src/my_robot_controller/my_robot_controller/temp/LLMRun/{picTime}.png', self.imgSave)
             self.imgDecode = base64.b64encode(image).decode('utf-8')
             self.LLMResponse = self.GPT4o()
@@ -97,6 +98,9 @@ class mybotFootballerNode(Node):
         # for point in points:
         #     self.get_logger().info(f'Point: {point}')
 
+
+    def laser_callback(self, msg:LaserScan): pass
+        # self.laser = msg
 
     def GPT4o(self):
         headers = {
